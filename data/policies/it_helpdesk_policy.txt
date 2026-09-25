@@ -1,0 +1,23 @@
+# IT Helpdesk Policy
+
+## Support Requests
+
+Employees can create IT support tickets for approved technical issues.
+
+A support ticket should contain a clear description of the problem and relevant information needed by the helpdesk.
+
+## Ticket Priority
+
+Normal issues should use the standard support priority unless the organization's support rules specify otherwise.
+
+Critical incidents should follow the organization's incident escalation process.
+
+## Ticket Status
+
+Employees can use the approved helpdesk system to check the status of their support tickets.
+
+## AI Assistant
+
+The AI assistant may help employees understand helpdesk procedures.
+
+Creating a ticket is an external action and must be performed only through an approved and authorized tool.

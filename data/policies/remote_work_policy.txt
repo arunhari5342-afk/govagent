@@ -1,0 +1,19 @@
+# Remote Work Policy
+
+## Eligibility
+
+Employees may work remotely when permitted by their role, team requirements, and applicable company policy.
+
+## Equipment
+
+Employees working remotely are responsible for using approved company equipment and following applicable security requirements.
+
+## Security
+
+Employees must follow company security policies when accessing enterprise systems remotely.
+
+Sensitive company information should only be accessed through approved systems and connections.
+
+## Helpdesk
+
+Technical problems with approved remote-work equipment or access should be reported through the enterprise IT helpdesk.

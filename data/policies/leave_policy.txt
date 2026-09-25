@@ -1,0 +1,23 @@
+# Employee Leave Policy
+
+## Leave Balance
+
+Employees can check their current leave balance through the enterprise HR system.
+
+The leave balance includes available annual leave and other applicable leave categories assigned to the employee.
+
+## Leave Request
+
+Employees should submit leave requests through the approved HR process.
+
+A leave request should include the requested start date, end date, and leave type.
+
+## Approval
+
+Leave requests may require manager approval according to the organization's leave rules.
+
+## Helpdesk
+
+For questions about leave balances or leave requests, employees may contact the HR helpdesk.
+
+The AI assistant must not invent leave balances. If a current balance is not available from an authorized enterprise system, the assistant should state that it cannot retrieve the current balance.

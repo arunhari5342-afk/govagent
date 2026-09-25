@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg[binary]
+pgvector
+python-dotenv
+sentence-transformers
+redis
+mcp
+pydantic
+pytest
