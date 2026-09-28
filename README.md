@@ -1,166 +1,95 @@
 # GovAgent
 
-**GovAgent — Governed Enterprise Helpdesk & Policy Assistant**
+## Governed Enterprise Helpdesk & Policy Assistant
 
-## Overview
+GovAgent is an enterprise AI assistant that combines policy retrieval, agentic routing, controlled tool execution, human approval, reviewer validation, audit logging, session memory, and governance controls.
 
-GovAgent is an agentic AI prototype designed to provide a governed conversational assistant for enterprise helpdesk and policy questions.
+The system is designed to demonstrate that an enterprise AI assistant should not only generate useful responses, but also provide controlled and traceable execution for actions that modify enterprise data.
 
-The system combines:
+---
 
-* LLM-based reasoning
-* Retrieval-augmented generation
-* Agent workflows
-* Approved tools
-* Conversation memory
-* Input/output validation
-* Guardrails
-* Authorization
-* Evaluation
-* Observability and audit logging
+## 1. Problem Statement
 
-## Problem
+Enterprise employees frequently need help with:
 
-Enterprise information is often distributed across policies, procedures, and internal documentation.
+* Company policies
+* Leave information
+* IT support requests
+* Helpdesk tickets
+* Operational questions
 
-Employees may spend significant time finding the correct information, while an unrestricted AI assistant may generate unsupported answers or perform unauthorized actions.
+A simple LLM chatbot can answer questions, but it should not be allowed to perform sensitive actions without appropriate controls.
 
-GovAgent aims to provide a conversational interface while keeping knowledge retrieval, tool execution, and AI behavior within controlled boundaries.
+GovAgent addresses this by separating:
 
-## Goals
+1. Information retrieval
+2. Decision/routing
+3. Action execution
+4. Human approval
+5. Review and validation
+6. Governance and auditing
 
-* Provide grounded enterprise answers
-* Retrieve relevant approved information
-* Support conversational interactions
-* Use approved tools when required
-* Validate inputs and outputs
-* Prevent unauthorized actions
-* Record important execution information
-* Evaluate quality and safety
+---
 
-## Architecture
+## 2. Key Features
 
-The architecture separates:
+### Policy RAG
+
+GovAgent retrieves relevant enterprise policy documents from PostgreSQL/pgvector and uses the retrieved content as grounding context for the LLM.
+
+Supported policy examples:
+
+* Leave policy
+* IT helpdesk policy
+* Remote work policy
+
+### Supervisor Routing
+
+A supervisor/router determines whether a request should be handled by:
+
+* `policy_rag`
+* `action`
+
+### Action Agent
+
+The action path can execute controlled enterprise operations through MCP-style tools.
+
+Current tools include:
+
+* `get_leave_balance`
+* `create_ticket`
+
+### Human Approval
+
+Write operations such as ticket creation require human approval before execution.
+
+Example:
 
 ```text
-Plain Code
+User request
     ↓
-Workflow
+Action Agent
     ↓
-Agent
+Approval Request
     ↓
-Tools / Retrieval
+Human Reviewer
     ↓
-Governance
+Approved
     ↓
-Validation
-    ↓
-Response
+Ticket Created
 ```
 
-See:
+### Reviewer Agent
 
-* `architecture/architecture.md`
-* `architecture/ADR-001.md`
+The reviewer validates generated policy answers for groundedness and identifies potential issues.
 
-## Project Documentation
+### Governance Controls
 
-| Document                       | Purpose                                             |
-| ------------------------------ | --------------------------------------------------- |
-| `docs/problem_brief.md`        | GovAgent problem definition                         |
-| `docs/user_stories.md`         | User requirements and acceptance criteria           |
-| `docs/success_metrics.md`      | Quality, safety, performance and governance metrics |
-| `docs/scope.md`                | MVP and stretch scope                               |
-| `architecture/architecture.md` | System architecture and block classification        |
-| `architecture/ADR-001.md`      | Architecture and framework decision                 |
+GovAgent includes:
 
-## MVP
-
-The MVP will include:
-
-* Enterprise document ingestion
-* Embeddings
-* Vector retrieval
-* Grounded Q&A
-* Basic conversation memory
-* Agent/workflow orchestration
-* Approved tool usage
-* Input validation
-* Output validation
-* Guardrails
-* Tool authorization
+* Prompt-injection detection
+* Budget/token limits
+* Cost tracking
+* Approval enforcement
 * Audit logging
-* Evaluation dataset
-* Basic observability
-
-## Stretch Features
-
-Potential extensions include:
-
-* Multiple agents
-* Human approval
-* Role-based tool access
-* MCP
-* Advanced observability
-* Automated evaluation
-* Enterprise integrations
-* Administrative monitoring
-
-## Technology Direction
-
-The initial implementation is planned around:
-
-* Python
-* FastAPI
-* LangGraph
-* LLM API
-* Vector database / retrieval layer
-* PostgreSQL where appropriate
-
-Specific implementation choices may be refined during development.
-
-## Repository Structure
-
-```text
-govagent/
-│
-├── README.md
-│
-├── architecture/
-│   ├── architecture.md
-│   └── ADR-001.md
-│
-├── docs/
-│   ├── problem_brief.md
-│   ├── user_stories.md
-│   ├── success_metrics.md
-│   └── scope.md
-│
-├── src/
-│
-└── tests/
-```
-
-## Current Status
-
-**Phase:** Problem Definition & Architecture
-
-Completed:
-
-* Problem brief
-* User stories
-* Success metrics
-* MVP vs stretch scope
-* Architecture design
-* Plain Code / Workflow / Agent classification
-* ADR-001
-
-Next phase:
-
-* Project implementation
-* Knowledge ingestion
-* Retrieval
-* Agent workflow
-* Tools
-* Guardrails
-* Evaluation
+* Tool failure h

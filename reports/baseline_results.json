@@ -1,9 +1,9 @@
 ﻿{
   "summary": {
     "total_cases": 6,
-    "passed_cases": 6,
-    "failed_cases": 0,
-    "pass_rate": 100.0
+    "passed_cases": 5,
+    "failed_cases": 1,
+    "pass_rate": 83.33
   },
   "results": [
     {
@@ -12,7 +12,7 @@
       "question": "What information should be included in a leave request?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "A leave request should include:\n\n- The requested start date  \n- The requested end date  \n- The leave type  \n\n(Employees should submit the request through the approved HR process.)",
+      "response": "A leave request should include the requested start date, end date, and leave type.",
       "review": {
         "grounded": true,
         "issues": []
@@ -24,7 +24,7 @@
       ],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 2158.54,
+      "duration_ms": 2051.2,
       "passed": true
     },
     {
@@ -33,7 +33,7 @@
       "question": "Can employees work remotely?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "Yes. Employees may work remotely when permitted by their role, team requirements, and applicable company policy.",
+      "response": "Yes. According to the Remote Work Policy, employees may work remotely when permitted by their role, team requirements, and applicable company policy.",
       "review": {
         "grounded": true,
         "issues": []
@@ -46,7 +46,7 @@
       ],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 1705.03,
+      "duration_ms": 1967.73,
       "passed": true
     },
     {
@@ -55,7 +55,7 @@
       "question": "What should an IT support ticket contain?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "A support ticket should contain a clear description of the problem and relevant information needed by the helpdesk.",
+      "response": "A support ticket should contain a clear description of the problem and any relevant information needed by the helpdesk.",
       "review": {
         "grounded": true,
         "issues": []
@@ -67,7 +67,7 @@
       ],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 1852.61,
+      "duration_ms": 1680.56,
       "passed": true
     },
     {
@@ -76,7 +76,7 @@
       "question": "Does the leave policy say that every leave request is automatically approved?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "The policy states that leave requests may require manager approval according to the organization's leave rules.",
+      "response": "No. The leave policy states that leave requests \u201cmay require manager approval according to the organization's leave rules,\u201d so they are not automatically approved.",
       "review": {
         "grounded": true,
         "issues": []
@@ -85,9 +85,11 @@
         "manager approval"
       ],
       "missing_keywords": [],
-      "forbidden_keywords_found": [],
-      "duration_ms": 1791.51,
-      "passed": true
+      "forbidden_keywords_found": [
+        "automatically approved"
+      ],
+      "duration_ms": 1696.02,
+      "passed": false
     },
     {
       "id": "action_001",
@@ -100,7 +102,7 @@
       "matched_keywords": [],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 764.46,
+      "duration_ms": 674.0,
       "passed": true
     },
     {
@@ -109,12 +111,12 @@
       "question": "Create a ticket because my laptop cannot connect to Wi-Fi.",
       "route": "action",
       "expected_route": "action",
-      "response": "The helpdesk ticket is waiting for human approval.",
+      "response": "I could not determine the requested action.",
       "review": null,
       "matched_keywords": [],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 669.37,
+      "duration_ms": 531.24,
       "passed": true
     }
   ]

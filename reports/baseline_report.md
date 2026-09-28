@@ -1,24 +1,24 @@
 ﻿# GovAgent Baseline Evaluation Report
 
-Generated: 2026-09-28T06:41:27.211166+00:00
+Generated: 2026-09-28T06:55:29.848746+00:00
 
 ## Summary
 
 - Total cases: 6
-- Passed cases: 6
-- Failed cases: 0
-- Pass rate: 100.0%
+- Passed cases: 5
+- Failed cases: 1
+- Pass rate: 83.33%
 
 ## Evaluation Results
 
 | ID | Category | Route | Duration (ms) | Result |
 |---|---|---|---:|---|
-| policy_001 | policy | policy_rag | 2158.54 | PASS |
-| policy_002 | policy | policy_rag | 1705.03 | PASS |
-| policy_003 | policy | policy_rag | 1852.61 | PASS |
-| policy_004 | groundedness | policy_rag | 1791.51 | PASS |
-| action_001 | action | action | 764.46 | PASS |
-| action_002 | action | action | 669.37 | PASS |
+| policy_001 | policy | policy_rag | 2051.2 | PASS |
+| policy_002 | policy | policy_rag | 1967.73 | PASS |
+| policy_003 | policy | policy_rag | 1680.56 | PASS |
+| policy_004 | groundedness | policy_rag | 1696.02 | FAIL |
+| action_001 | action | action | 674.0 | PASS |
+| action_002 | action | action | 531.24 | PASS |
 
 ## Detailed Results
 
@@ -30,7 +30,7 @@ Generated: 2026-09-28T06:41:27.211166+00:00
 
 **Passed:** True
 
-**Duration:** 2158.54 ms
+**Duration:** 2051.2 ms
 
 **Grounded:** True
 
@@ -42,7 +42,7 @@ Generated: 2026-09-28T06:41:27.211166+00:00
 
 **Passed:** True
 
-**Duration:** 1705.03 ms
+**Duration:** 1967.73 ms
 
 **Grounded:** True
 
@@ -54,7 +54,7 @@ Generated: 2026-09-28T06:41:27.211166+00:00
 
 **Passed:** True
 
-**Duration:** 1852.61 ms
+**Duration:** 1680.56 ms
 
 **Grounded:** True
 
@@ -64,9 +64,11 @@ Generated: 2026-09-28T06:41:27.211166+00:00
 
 **Route:** policy_rag
 
-**Passed:** True
+**Passed:** False
 
-**Duration:** 1791.51 ms
+**Duration:** 1696.02 ms
+
+**Forbidden keywords found:** automatically approved
 
 **Grounded:** True
 
@@ -78,7 +80,7 @@ Generated: 2026-09-28T06:41:27.211166+00:00
 
 **Passed:** True
 
-**Duration:** 764.46 ms
+**Duration:** 674.0 ms
 
 ### action_002
 
@@ -88,7 +90,7 @@ Generated: 2026-09-28T06:41:27.211166+00:00
 
 **Passed:** True
 
-**Duration:** 669.37 ms
+**Duration:** 531.24 ms
 
 ## Baseline Observations
 

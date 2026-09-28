@@ -1,200 +1,370 @@
-# GovAgent — Architecture Design
+# GovAgent Architecture
 
-## 1. Architecture Goal
+## 1. Overview
 
-GovAgent uses a governed agentic architecture in which deterministic application code, controlled workflows, and agent-based reasoning have separate responsibilities.
+GovAgent is a governed enterprise AI assistant composed of a FastAPI service, LangGraph supervisor workflow, policy RAG pipeline, action tools, human approval mechanism, reviewer agent, governance layer, persistent memory, and observability components.
 
-The architecture is designed to keep important enterprise operations controlled while allowing the LLM/agent to make decisions where reasoning is useful.
+The architecture separates deterministic application logic from LLM-driven reasoning and controlled tool execution.
 
-## 2. High-Level Data Flow
+---
+
+## 2. High-Level Architecture
 
 ```mermaid
 flowchart TD
 
-    USER[Employee / Helpdesk User]
+    USER[User]
 
-    API[FastAPI / API Layer]
-    INPUT[Input Validation]
+    API[FastAPI]
 
-    WORKFLOW[GovAgent Workflow]
+    ROUTER[Supervisor Router]
 
-    AGENT[Agent / LLM Reasoning]
-    ROUTER[Task Routing]
+    GUARD[Governance Guard]
 
-    RETRIEVAL[Document Retrieval]
-    KB[(Enterprise Knowledge Base)]
+    POLICY[Policy RAG Agent]
 
-    TOOLS[Approved Tool Layer]
-    SEARCH[Enterprise Search Tool]
-    CALC[Calculator Tool]
+    RETRIEVAL[Policy Retriever]
 
-    CONTEXT[Retrieved Context + Tool Results]
+    VECTOR[(PostgreSQL + pgvector)]
 
-    GUARD[Governance / Guardrails]
-    OUTPUT[Output Validation]
+    REVIEWER[Reviewer Agent]
 
-    RESPONSE[Final Response]
+    ACTION[Action Agent]
 
-    AUDIT[Audit + Observability]
+    TOOLS[MCP-style Tool Layer]
+
+    LEAVE[get_leave_balance]
+
+    TICKET[create_ticket]
+
+    APPROVAL[Human Approval]
+
+    AUDIT[(Audit Log)]
+
+    REDIS[(Redis)]
+
+    CHECKPOINT[(PostgreSQL Checkpointer)]
+
+    LLM[Groq LLM]
 
     USER --> API
-    API --> INPUT
-    INPUT --> WORKFLOW
+    API --> ROUTER
+    ROUTER --> GUARD
 
-    WORKFLOW --> ROUTER
-    ROUTER --> AGENT
+    GUARD --> POLICY
+    GUARD --> ACTION
 
-    AGENT --> RETRIEVAL
-    RETRIEVAL --> KB
-    KB --> RETRIEVAL
+    ROUTER --> LLM
 
-    AGENT --> TOOLS
-    TOOLS --> SEARCH
-    TOOLS --> CALC
+    POLICY --> RETRIEVAL
+    RETRIEVAL --> VECTOR
+    POLICY --> LLM
+    POLICY --> REVIEWER
+    REVIEWER --> LLM
 
-    RETRIEVAL --> CONTEXT
-    TOOLS --> CONTEXT
-    CONTEXT --> AGENT
+    ACTION --> TOOLS
+    TOOLS --> LEAVE
+    TOOLS --> TICKET
 
-    AGENT --> GUARD
-    GUARD --> OUTPUT
-    OUTPUT --> RESPONSE
-    RESPONSE --> USER
+    TICKET --> APPROVAL
+    APPROVAL --> TICKET
+    APPROVAL --> AUDIT
 
-    WORKFLOW --> AUDIT
-    AGENT --> AUDIT
-    TOOLS --> AUDIT
+    API --> REDIS
+    API --> CHECKPOINT
+
     GUARD --> AUDIT
-    OUTPUT --> AUDIT
+    ACTION --> AUDIT
 ```
 
-## 3. Architecture Blocks
+---
 
-| Block                     | Classification        | Responsibility                                  | Justification                                               |
-| ------------------------- | --------------------- | ----------------------------------------------- | ----------------------------------------------------------- |
-| Employee / Helpdesk User  | External              | Sends requests                                  | Human interaction                                           |
-| FastAPI / API Layer       | Plain Code            | HTTP/API handling                               | Deterministic application logic                             |
-| Input Validation          | Plain Code            | Validate incoming requests                      | Validation should be deterministic                          |
-| GovAgent Workflow         | Workflow              | Controls execution sequence                     | Provides explicit control over agent execution              |
-| Task Routing              | Workflow              | Determines available execution path             | Routing rules should remain controlled                      |
-| Agent / LLM Reasoning     | Agent                 | Understands requests and decides actions        | Requires language reasoning and tool selection              |
-| Document Retrieval        | Plain Code            | Searches knowledge base                         | Retrieval is infrastructure and should be predictable       |
-| Enterprise Knowledge Base | Plain Code / Data     | Stores enterprise information                   | Data storage does not require agent reasoning               |
-| Approved Tool Layer       | Plain Code            | Provides controlled capabilities                | Tool implementations should be deterministic                |
-| Enterprise Search Tool    | Plain Code            | Searches approved enterprise information        | Controlled external/data operation                          |
-| Calculator Tool           | Plain Code            | Performs calculations                           | Deterministic operation                                     |
-| Context Assembly          | Plain Code            | Combines retrieved information and tool results | Controlled data transformation                              |
-| Governance / Guardrails   | Workflow + Plain Code | Enforces system rules                           | Critical safety decisions should not depend only on the LLM |
-| Output Validation         | Plain Code            | Checks generated output                         | Deterministic validation                                    |
-| Final Response            | Plain Code            | Returns response to user                        | API/application responsibility                              |
-| Audit + Observability     | Plain Code            | Records execution information                   | Logging and metrics should be deterministic                 |
-
-## 4. Why This Separation Matters
-
-GovAgent should not make every part of the application an autonomous agent.
+## 3. Component Classification
 
 ### Plain Code
 
-Use plain code when the operation has a predictable rule.
+Deterministic application components:
 
-Examples:
-
-* Validate JSON
-* Check authorization
-* Search a database
-* Calculate a value
-* Store logs
-* Measure latency
-* Count tokens
+* FastAPI API layer
+* Database access
+* Redis memory
+* Audit logging
+* Approval persistence
+* Budget calculation
+* Governance checks
+* Configuration
+* Validation
 
 ### Workflow
 
-Use a workflow when the execution path should be explicitly controlled.
+LangGraph orchestration components:
 
-Examples:
-
-* Validate input → retrieve → generate → validate output
-* Decide whether tool use is permitted
-* Require approval before a sensitive action
-* Route different request types
+* Supervisor/router
+* Governance guard
+* Policy RAG path
+* Action path
+* Reviewer path
+* Checkpoint persistence
 
 ### Agent
 
-Use an agent when the system needs reasoning to determine what should happen next.
+LLM-driven specialists:
 
-Examples:
+* Router agent
+* Policy RAG agent
+* Action agent
+* Reviewer agent
 
-* Understand an ambiguous natural-language request
-* Decide whether document retrieval is necessary
-* Select an appropriate approved tool
-* Determine whether additional information is required
+---
 
-## 5. Example Execution
+## 4. Request Lifecycle
 
-A policy question could follow:
+### Policy Request
 
-```text
-User
- ↓
-API
- ↓
-Input Validation
- ↓
-GovAgent Workflow
- ↓
-Agent
- ↓
-Document Retrieval
- ↓
-Enterprise Knowledge Base
- ↓
-Relevant Context
- ↓
-Agent / LLM
- ↓
-Governance
- ↓
-Output Validation
- ↓
-Response
+```mermaid
+sequenceDiagram
+
+    participant U as User
+    participant API as FastAPI
+    participant R as Router
+    participant G as Guard
+    participant P as Policy RAG
+    participant V as pgvector
+    participant L as LLM
+    participant RV as Reviewer
+
+    U->>API: Policy question
+    API->>R: User request
+    R->>L: Classify route
+    L-->>R: policy_rag
+    R->>G: Governance check
+    G->>P: Allow
+    P->>V: Semantic search
+    V-->>P: Policy chunks
+    P->>L: Grounded prompt
+    L-->>P: Draft answer
+    P->>RV: Review answer
+    RV->>L: Validate groundedness
+    L-->>RV: Review result
+    RV-->>API: Final response
+    API-->>U: Grounded answer
 ```
 
-A tool-based request could follow:
+---
 
-```text
-User
- ↓
-Input Validation
- ↓
-Workflow
- ↓
-Agent
- ↓
-Tool Selection
- ↓
-Authorization Check
- ↓
-Approved Tool
- ↓
-Tool Result
- ↓
-Agent
- ↓
-Output Validation
- ↓
-Response
+## 5. Action Lifecycle
+
+```mermaid
+sequenceDiagram
+
+    participant U as User
+    participant API as FastAPI
+    participant R as Router
+    participant A as Action Agent
+    participant AP as Approval Service
+    participant H as Human Reviewer
+    participant T as Tool
+    participant DB as PostgreSQL
+    participant AUD as Audit Log
+
+    U->>API: Create IT ticket
+    API->>R: User request
+    R-->>API: action
+    API->>A: Action request
+    A->>AP: Create approval
+    AP->>DB: Store pending approval
+    AP->>AUD: Audit event
+    AP-->>U: Approval required
+
+    H->>API: Approve
+    API->>AP: Process approval
+    AP->>T: create_ticket
+    T->>DB: Insert ticket
+    DB-->>T: Ticket ID
+    T-->>AP: Ticket result
+    AP->>AUD: Record execution
+    AP-->>H: Approved + ticket result
 ```
 
-## 6. Governance Principle
+---
 
-The LLM should not have unrestricted control over enterprise systems.
+## 6. Governance
 
-Tools should be:
+Governance controls are applied before controlled execution.
 
-* Explicitly registered
-* Validated
-* Authorized
-* Logged
-* Executed through controlled application code
+### Prompt Injection
 
-This allows the agent to make decisions while keeping consequential operations under deterministic system control.
+```text
+User/document content
+        ↓
+Injection detection
+        ↓
+Blocked / Allowed
+```
+
+### Budget
+
+The system tracks:
+
+* Prompt tokens
+* Completion tokens
+* Estimated cost
+
+Configured limits:
+
+```text
+MAX_REQUEST_TOKENS = 8000
+MAX_REQUEST_COST_USD = 0.01
+```
+
+### Approval
+
+Write operations require human approval.
+
+```text
+Read
+ └── Can proceed through normal workflow
+
+Write
+ └── Approval required
+       ├── Approved → Execute
+       └── Rejected → Stop
+```
+
+---
+
+## 7. Data Stores
+
+### PostgreSQL
+
+Used for:
+
+* Employees
+* Leave balances
+* Helpdesk tickets
+* Approvals
+* Audit logs
+* LangGraph checkpoints
+* Policy vectors
+
+### pgvector
+
+Used for semantic policy retrieval.
+
+### Redis
+
+Used for session-level memory.
+
+---
+
+## 8. Observability
+
+Tracing spans include:
+
+```text
+llm.router
+retrieval.search
+llm.policy_rag
+llm.reviewer
+tool.get_leave_balance
+tool.create_ticket
+```
+
+Each span records:
+
+* Span ID
+* Component
+* Start timestamp
+* Finish timestamp
+* Duration
+* Status
+* Metadata
+
+LLM usage records:
+
+```text
+prompt_tokens
+completion_tokens
+total_tokens
+estimated_cost_usd
+```
+
+---
+
+## 9. Failure Modes
+
+The architecture explicitly tests:
+
+### Prompt Injection
+
+Malicious instructions embedded in user input or retrieved documents are detected.
+
+### Budget Exhaustion
+
+Requests exceeding token or cost limits are blocked.
+
+### Tool Timeout
+
+Slow tool execution is detected through timeout testing.
+
+### Approval Replay
+
+A previously decided approval cannot be approved or rejected again.
+
+### Tool Failure
+
+Tool execution errors are recorded through audit logging and tracing.
+
+---
+
+## 10. Security Principles
+
+GovAgent follows these principles:
+
+1. Retrieved documents are treated as untrusted content.
+2. LLM output does not automatically authorize enterprise writes.
+3. Write operations require human approval.
+4. Important operations are auditable.
+5. Token and cost budgets are monitored.
+6. Tool failures are captured.
+7. Reviewer validation is performed for policy responses.
+
+---
+
+## 11. Architecture Decision
+
+The project uses LangGraph because the workflow contains explicit state transitions and governance checkpoints.
+
+The architecture deliberately separates:
+
+```text
+LLM reasoning
+      ↓
+Workflow control
+      ↓
+Tool execution
+      ↓
+Human approval
+      ↓
+Persistent side effect
+```
+
+This provides clearer control boundaries than allowing an unrestricted agent to execute enterprise actions directly.
+
+---
+
+## 12. Production Extensions
+
+Future production architecture could add:
+
+* OAuth/OIDC
+* RBAC
+* Enterprise identity
+* Full MCP deployment
+* OpenTelemetry
+* Prometheus/Grafana
+* CI/CD evaluation gates
+* Secret management
+* Policy-as-code
+* Distributed execution
+* Stronger content safety controls
