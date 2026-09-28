@@ -1,4 +1,4 @@
-import json
+﻿import json
 import time
 
 from pathlib import Path
@@ -32,7 +32,7 @@ def load_dataset():
     with open(
         DATASET_PATH,
         "r",
-        encoding="utf-8",
+        encoding="utf-8-sig",
     ) as file:
 
         return json.load(file)
@@ -303,7 +303,7 @@ def run_evaluations():
     with open(
         REPORT_PATH,
         "w",
-        encoding="utf-8",
+        encoding="utf-8-sig",
     ) as file:
 
         json.dump(

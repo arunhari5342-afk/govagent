@@ -22,3 +22,15 @@ class GovAgentState(TypedDict, total=False):
     review: dict
 
     approval: dict
+
+    governance_status: Literal[
+        "allowed",
+        "blocked",
+        "budget_exceeded",
+    ]
+
+    prompt_tokens: int
+
+    completion_tokens: int
+
+    estimated_cost_usd: float

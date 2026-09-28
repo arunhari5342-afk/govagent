@@ -1,4 +1,4 @@
-import json
+﻿import json
 
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,7 +26,7 @@ def generate_report():
     with open(
         RESULTS_PATH,
         "r",
-        encoding="utf-8",
+        encoding="utf-8-sig",
     ) as file:
 
         data = json.load(file)
@@ -254,7 +254,7 @@ def generate_report():
     with open(
         REPORT_PATH,
         "w",
-        encoding="utf-8",
+        encoding="utf-8-sig",
     ) as file:
 
         file.write(

@@ -1,60 +1,147 @@
+import re
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    TimeoutError,
+)
+
 from src.graph.state import GovAgentState
 from src.mcp_server.tools import (
+    create_ticket,
     get_leave_balance,
 )
-from src.observability.tracing import (
-    trace_span,
-)
+from src.observability.tracing import trace_span
 from src.services.approval_service import (
     create_approval,
 )
+from src.governance.audit import write_audit_log
+
+
+TOOL_TIMEOUT_SECONDS = 5
+
+
+def run_tool_with_timeout(
+    tool_function,
+    *,
+    timeout_seconds: int = TOOL_TIMEOUT_SECONDS,
+    **kwargs,
+):
+    """Run a tool with a bounded execution time."""
+
+    with ThreadPoolExecutor(
+        max_workers=1
+    ) as executor:
+
+        future = executor.submit(
+            tool_function,
+            **kwargs,
+        )
+
+        return future.result(
+            timeout=timeout_seconds
+        )
 
 
 def action_agent(
     state: GovAgentState,
 ) -> GovAgentState:
 
-    user_input = state[
-        "user_input"
-    ]
-
-    user_input_lower = (
-        user_input
-        .lower()
-        .strip()
-    )
+    user_input = state["user_input"]
+    normalized = user_input.lower()
 
     session_id = state.get(
         "session_id",
-        "unknown-session",
+        "default-session",
     )
 
-    # -----------------------------------------------------
-    # Leave balance - read-only tool
-    # -----------------------------------------------------
+    # ---------------------------------------------
+    # Leave balance = READ action
+    # ---------------------------------------------
 
-    leave_balance_request = (
-        "leave balance"
-        in user_input_lower
-        or "remaining leave"
-        in user_input_lower
-        or "how many leaves"
-        in user_input_lower
-    )
+    if (
+        "leave balance" in normalized
+        or "how much leave" in normalized
+        or "remaining leave" in normalized
+    ):
 
-    if leave_balance_request:
+        try:
+            with trace_span(
+                "tool.get_leave_balance",
+                {
+                    "employee_id": "EMP001",
+                    "timeout_seconds": (
+                        TOOL_TIMEOUT_SECONDS
+                    ),
+                },
+            ):
 
-        with trace_span(
-            "tool.get_leave_balance",
-            {
-                "tool": "get_leave_balance",
+                result = run_tool_with_timeout(
+                    get_leave_balance,
+                    timeout_seconds=(
+                        TOOL_TIMEOUT_SECONDS
+                    ),
+                    employee_id="EMP001",
+                )
+
+        except TimeoutError:
+
+            write_audit_log(
+                session_id=session_id,
+                action="get_leave_balance",
+                route="action",
+                tool_name="get_leave_balance",
+                status="timeout",
+                details={
+                    "timeout_seconds": (
+                        TOOL_TIMEOUT_SECONDS
+                    ),
+                },
+            )
+
+            return {
+                **state,
+                "response": (
+                    "The leave-balance service "
+                    "timed out. No action was completed."
+                ),
+                "tool_result": {
+                    "status": "timeout",
+                },
+            }
+
+        except Exception as exc:
+
+            write_audit_log(
+                session_id=session_id,
+                action="get_leave_balance",
+                route="action",
+                tool_name="get_leave_balance",
+                status="error",
+                details={
+                    "error": str(exc),
+                },
+            )
+
+            return {
+                **state,
+                "response": (
+                    "The leave-balance service "
+                    "could not be reached."
+                ),
+                "tool_result": {
+                    "status": "error",
+                },
+            }
+
+        write_audit_log(
+            session_id=session_id,
+            action="get_leave_balance",
+            route="action",
+            tool_name="get_leave_balance",
+            status="success",
+            details={
                 "employee_id": "EMP001",
             },
-        ):
-
-            result = get_leave_balance(
-                "EMP001"
-            )
+        )
 
         return {
             **state,
@@ -62,112 +149,55 @@ def action_agent(
             "response": str(result),
         }
 
-    # -----------------------------------------------------
-    # Helpdesk ticket - write action
-    # -----------------------------------------------------
+    # ---------------------------------------------
+    # create_ticket = WRITE action
+    # ---------------------------------------------
 
-    ticket_request = (
-        "create ticket"
-        in user_input_lower
-        or "create a ticket"
-        in user_input_lower
-        or "raise a ticket"
-        in user_input_lower
-        or "raise ticket"
-        in user_input_lower
-        or "open a ticket"
-        in user_input_lower
-        or "submit a ticket"
-        in user_input_lower
-        or "report an issue"
-        in user_input_lower
-        or "it support"
-        in user_input_lower
-        or "helpdesk ticket"
-        in user_input_lower
-    )
+    ticket_keywords = [
+        "create ticket",
+        "create an it ticket",
+        "raise a ticket",
+        "open a ticket",
+        "helpdesk ticket",
+    ]
 
-    if ticket_request:
+    if any(
+        keyword in normalized
+        for keyword in ticket_keywords
+    ):
 
-        payload = {
-            "employee_id": "EMP001",
-            "title": "IT Helpdesk Request",
-            "description": user_input,
-        }
-
-        approval = create_approval(
+        approval_id = create_approval(
             session_id=session_id,
             action_type="create_ticket",
-            payload=payload,
-        )
-
-        approval_id = approval[
-            "id"
-        ]
-
-        approval_ui = {
-            "type": "approval_request",
-            "id": approval_id,
-            "title": (
-                "IT Helpdesk Ticket Approval"
-            ),
-            "message": (
-                "A helpdesk ticket requires "
-                "human approval before creation."
-            ),
-            "action": {
-                "action_type": "create_ticket",
+            payload={
                 "employee_id": "EMP001",
+                "title": "IT Helpdesk Request",
+                "description": user_input,
+                "priority": "normal",
             },
-            "actions": [
-                {
-                    "id": "approve",
-                    "label": "Approve",
-                    "method": "POST",
-                    "path": (
-                        f"/approvals/"
-                        f"{approval_id}"
-                    ),
-                    "body": {
-                        "approved": True,
-                    },
-                },
-                {
-                    "id": "reject",
-                    "label": "Reject",
-                    "method": "POST",
-                    "path": (
-                        f"/approvals/"
-                        f"{approval_id}"
-                    ),
-                    "body": {
-                        "approved": False,
-                    },
-                },
-            ],
-        }
+        )
 
         return {
             **state,
-            "approval": approval_ui,
-            "tool_result": {
+            "approval": {
                 "approval_id": approval_id,
                 "status": "pending",
+                "action": "create_ticket",
+                "message": (
+                    "Human approval is required "
+                    "before creating this ticket."
+                ),
             },
             "response": (
-                "The helpdesk ticket is waiting "
-                "for human approval."
+                "I prepared the IT helpdesk ticket. "
+                "Human approval is required before "
+                "the ticket can be created."
             ),
         }
-
-    # -----------------------------------------------------
-    # Unknown action
-    # -----------------------------------------------------
 
     return {
         **state,
         "response": (
-            "I could not determine which "
-            "authorized action should be performed."
+            "I could not determine the requested action."
         ),
     }

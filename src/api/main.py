@@ -1,156 +1,75 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+﻿from contextlib import asynccontextmanager
 
-from src.services.approval_service import process_approval
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+from src.governance.audit import initialize_audit_table
+from src.services.approval_service import (
+    initialize_approval_table,
+    process_approval,
+)
 from src.services.chat_service import chat
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    initialize_audit_table()
+    initialize_approval_table()
+
+    yield
+
+
 app = FastAPI(
-    title="GovAgent API",
-    description="Agentic enterprise assistant API",
+    title="GovAgent",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
-# ---------------------------------------------------------
-# Request / Response Models
-# ---------------------------------------------------------
-
-
 class ChatRequest(BaseModel):
-    message: str = Field(
-        min_length=1,
-        max_length=5000,
-    )
-
+    message: str
     session_id: str | None = None
-
-    context: str = ""
-
-
-class ChatResponse(BaseModel):
-    session_id: str
-
-    route: str | None
-
-    response: str | None
-
-    tool_result: dict | None = None
-
-    review: dict | None = None
-
-    approval: dict | None = None
+    context: str | None = None
 
 
 class ApprovalRequest(BaseModel):
     approved: bool
-
-    reviewer: str = Field(
-        min_length=1,
-        max_length=200,
-    )
-
-    comment: str = Field(
-        default="",
-        max_length=2000,
-    )
-
-
-# ---------------------------------------------------------
-# Basic API Endpoints
-# ---------------------------------------------------------
+    reviewer: str
+    comment: str | None = None
 
 
 @app.get("/")
 def root():
     return {
-        "service": "GovAgent",
+        "name": "GovAgent",
         "status": "running",
-        "version": "1.0.0",
     }
 
 
 @app.get("/health")
 def health():
     return {
-        "status": "healthy",
+        "status": "ok",
     }
 
 
-# ---------------------------------------------------------
-# Chat Endpoint
-# ---------------------------------------------------------
-
-
-@app.post(
-    "/chat",
-    response_model=ChatResponse,
-)
-def chat_endpoint(
-    request: ChatRequest,
-):
+@app.post("/chat")
+def chat_endpoint(request: ChatRequest):
     return chat(
         user_input=request.message,
         session_id=request.session_id,
-        context=request.context,
+        context=request.context or "",
     )
 
 
-# ---------------------------------------------------------
-# Human Approval Endpoint
-# ---------------------------------------------------------
-
-
-@app.post(
-    "/approvals/{approval_id}",
-)
-def approval_endpoint(
+@app.post("/approvals/{approval_id}")
+def approval(
     approval_id: int,
     request: ApprovalRequest,
 ):
-    try:
-        result = process_approval(
-            approval_id=approval_id,
-            approved=request.approved,
-            reviewer=request.reviewer,
-            comment=request.comment,
-        )
-
-        return result
-
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        )
-
-
-# ---------------------------------------------------------
-# A2A-style Reviewer Agent Card
-# ---------------------------------------------------------
-
-
-@app.get("/agents/reviewer")
-def reviewer_agent_card():
-    return {
-        "name": "GovAgent Reviewer",
-        "description": (
-            "Checks generated answers against "
-            "the supplied policy sources."
-        ),
-        "version": "1.0",
-        "agent_type": "reviewer",
-        "capabilities": [
-            "groundedness_check",
-            "source_consistency_check",
-        ],
-        "input": {
-            "question": "string",
-            "context": "string",
-            "draft_answer": "string",
-        },
-        "output": {
-            "grounded": "boolean",
-            "issues": "array",
-        },
-    }
+    return process_approval(
+        approval_id=approval_id,
+        approved=request.approved,
+        reviewer=request.reviewer,
+        comment=request.comment,
+    )

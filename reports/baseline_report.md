@@ -1,6 +1,6 @@
-# GovAgent Baseline Evaluation Report
+﻿# GovAgent Baseline Evaluation Report
 
-Generated: 2026-09-25T11:51:24.082061+00:00
+Generated: 2026-09-28T06:41:27.211166+00:00
 
 ## Summary
 
@@ -13,12 +13,12 @@ Generated: 2026-09-25T11:51:24.082061+00:00
 
 | ID | Category | Route | Duration (ms) | Result |
 |---|---|---|---:|---|
-| policy_001 | policy | policy_rag | 2080.86 | PASS |
-| policy_002 | policy | policy_rag | 1445.85 | PASS |
-| policy_003 | policy | policy_rag | 1626.98 | PASS |
-| policy_004 | groundedness | policy_rag | 1649.23 | PASS |
-| action_001 | action | action | 601.73 | PASS |
-| action_002 | action | action | 634.79 | PASS |
+| policy_001 | policy | policy_rag | 2158.54 | PASS |
+| policy_002 | policy | policy_rag | 1705.03 | PASS |
+| policy_003 | policy | policy_rag | 1852.61 | PASS |
+| policy_004 | groundedness | policy_rag | 1791.51 | PASS |
+| action_001 | action | action | 764.46 | PASS |
+| action_002 | action | action | 669.37 | PASS |
 
 ## Detailed Results
 
@@ -30,7 +30,7 @@ Generated: 2026-09-25T11:51:24.082061+00:00
 
 **Passed:** True
 
-**Duration:** 2080.86 ms
+**Duration:** 2158.54 ms
 
 **Grounded:** True
 
@@ -42,7 +42,7 @@ Generated: 2026-09-25T11:51:24.082061+00:00
 
 **Passed:** True
 
-**Duration:** 1445.85 ms
+**Duration:** 1705.03 ms
 
 **Grounded:** True
 
@@ -54,7 +54,7 @@ Generated: 2026-09-25T11:51:24.082061+00:00
 
 **Passed:** True
 
-**Duration:** 1626.98 ms
+**Duration:** 1852.61 ms
 
 **Grounded:** True
 
@@ -66,7 +66,7 @@ Generated: 2026-09-25T11:51:24.082061+00:00
 
 **Passed:** True
 
-**Duration:** 1649.23 ms
+**Duration:** 1791.51 ms
 
 **Grounded:** True
 
@@ -78,7 +78,7 @@ Generated: 2026-09-25T11:51:24.082061+00:00
 
 **Passed:** True
 
-**Duration:** 601.73 ms
+**Duration:** 764.46 ms
 
 ### action_002
 
@@ -88,7 +88,7 @@ Generated: 2026-09-25T11:51:24.082061+00:00
 
 **Passed:** True
 
-**Duration:** 634.79 ms
+**Duration:** 669.37 ms
 
 ## Baseline Observations
 
