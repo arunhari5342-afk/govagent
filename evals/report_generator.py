@@ -1,24 +1,12 @@
 ﻿import json
-
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 BASE_DIR = Path(__file__).resolve().parent
 
-RESULTS_PATH = (
-    BASE_DIR
-    / ".."
-    / "reports"
-    / "baseline_results.json"
-)
+RESULTS_PATH = BASE_DIR / ".." / "reports" / "baseline_results.json"
 
-REPORT_PATH = (
-    BASE_DIR
-    / ".."
-    / "reports"
-    / "baseline_report.md"
-)
+REPORT_PATH = BASE_DIR / ".." / "reports" / "baseline_report.md"
 
 
 def generate_report():
@@ -31,71 +19,43 @@ def generate_report():
 
         data = json.load(file)
 
-    summary = data[
-        "summary"
-    ]
+    summary = data["summary"]
 
     lines = []
 
-    lines.append(
-        "# GovAgent Baseline Evaluation Report"
-    )
+    lines.append("# GovAgent Baseline Evaluation Report")
 
     lines.append("")
 
-    lines.append(
-        f"Generated: {datetime.now(timezone.utc).isoformat()}"
-    )
+    lines.append(f"Generated: {datetime.now(timezone.utc).isoformat()}")
 
     lines.append("")
 
-    lines.append(
-        "## Summary"
-    )
+    lines.append("## Summary")
 
     lines.append("")
 
-    lines.append(
-        f"- Total cases: {summary['total_cases']}"
-    )
+    lines.append(f"- Total cases: {summary['total_cases']}")
 
-    lines.append(
-        f"- Passed cases: {summary['passed_cases']}"
-    )
+    lines.append(f"- Passed cases: {summary['passed_cases']}")
 
-    lines.append(
-        f"- Failed cases: {summary['failed_cases']}"
-    )
+    lines.append(f"- Failed cases: {summary['failed_cases']}")
 
-    lines.append(
-        f"- Pass rate: {summary['pass_rate']}%"
-    )
+    lines.append(f"- Pass rate: {summary['pass_rate']}%")
 
     lines.append("")
 
-    lines.append(
-        "## Evaluation Results"
-    )
+    lines.append("## Evaluation Results")
 
     lines.append("")
 
-    lines.append(
-        "| ID | Category | Route | Duration (ms) | Result |"
-    )
+    lines.append("| ID | Category | Route | Duration (ms) | Result |")
 
-    lines.append(
-        "|---|---|---|---:|---|"
-    )
+    lines.append("|---|---|---|---:|---|")
 
-    for result in data[
-        "results"
-    ]:
+    for result in data["results"]:
 
-        status = (
-            "PASS"
-            if result["passed"]
-            else "FAIL"
-        )
+        status = "PASS" if result["passed"] else "FAIL"
 
         lines.append(
             "| "
@@ -108,90 +68,54 @@ def generate_report():
 
     lines.append("")
 
-    lines.append(
-        "## Detailed Results"
-    )
+    lines.append("## Detailed Results")
 
     lines.append("")
 
-    for result in data[
-        "results"
-    ]:
+    for result in data["results"]:
 
-        lines.append(
-            f"### {result['id']}"
-        )
+        lines.append(f"### {result['id']}")
 
         lines.append("")
 
-        lines.append(
-            f"**Question:** "
-            f"{result['question']}"
-        )
+        lines.append(f"**Question:** " f"{result['question']}")
 
         lines.append("")
 
-        lines.append(
-            f"**Route:** "
-            f"{result['route']}"
-        )
+        lines.append(f"**Route:** " f"{result['route']}")
 
         lines.append("")
 
-        lines.append(
-            f"**Passed:** "
-            f"{result['passed']}"
-        )
+        lines.append(f"**Passed:** " f"{result['passed']}")
 
         lines.append("")
 
-        lines.append(
-            f"**Duration:** "
-            f"{result['duration_ms']} ms"
-        )
+        lines.append(f"**Duration:** " f"{result['duration_ms']} ms")
 
         lines.append("")
 
-        if result.get(
-            "missing_keywords"
-        ):
+        if result.get("missing_keywords"):
 
             lines.append(
-                "**Missing keywords:** "
-                + ", ".join(
-                    result[
-                        "missing_keywords"
-                    ]
-                )
+                "**Missing keywords:** " + ", ".join(result["missing_keywords"])
             )
 
             lines.append("")
 
-        if result.get(
-            "forbidden_keywords_found"
-        ):
+        if result.get("forbidden_keywords_found"):
 
             lines.append(
                 "**Forbidden keywords found:** "
-                + ", ".join(
-                    result[
-                        "forbidden_keywords_found"
-                    ]
-                )
+                + ", ".join(result["forbidden_keywords_found"])
             )
 
             lines.append("")
 
-        review = result.get(
-            "review"
-        )
+        review = result.get("review")
 
         if review:
 
-            lines.append(
-                "**Grounded:** "
-                f"{review.get('grounded')}"
-            )
+            lines.append("**Grounded:** " f"{review.get('grounded')}")
 
             lines.append("")
 
@@ -202,47 +126,29 @@ def generate_report():
 
             if issues:
 
-                lines.append(
-                    "**Reviewer issues:**"
-                )
+                lines.append("**Reviewer issues:**")
 
                 for issue in issues:
 
-                    lines.append(
-                        f"- {issue}"
-                    )
+                    lines.append(f"- {issue}")
 
                 lines.append("")
 
-    lines.append(
-        "## Baseline Observations"
-    )
+    lines.append("## Baseline Observations")
 
     lines.append("")
 
-    lines.append(
-        "- Evaluation uses a small deterministic baseline dataset."
-    )
+    lines.append("- Evaluation uses a small deterministic baseline dataset.")
 
-    lines.append(
-        "- Policy answers are checked using expected keywords."
-    )
+    lines.append("- Policy answers are checked using expected keywords.")
 
-    lines.append(
-        "- Reviewer groundedness is included for policy cases."
-    )
+    lines.append("- Reviewer groundedness is included for policy cases.")
 
-    lines.append(
-        "- Action cases verify supervisor routing."
-    )
+    lines.append("- Action cases verify supervisor routing.")
 
-    lines.append(
-        "- Response latency is recorded per evaluation case."
-    )
+    lines.append("- Response latency is recorded per evaluation case.")
 
-    lines.append(
-        "- LLM token usage is logged separately in application traces."
-    )
+    lines.append("- LLM token usage is logged separately in application traces.")
 
     lines.append("")
 
@@ -257,13 +163,9 @@ def generate_report():
         encoding="utf-8-sig",
     ) as file:
 
-        file.write(
-            "\n".join(lines)
-        )
+        file.write("\n".join(lines))
 
-    print(
-        f"Baseline report created: {REPORT_PATH}"
-    )
+    print(f"Baseline report created: {REPORT_PATH}")
 
 
 if __name__ == "__main__":

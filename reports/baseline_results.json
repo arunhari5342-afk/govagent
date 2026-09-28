@@ -12,7 +12,7 @@
       "question": "What information should be included in a leave request?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "A leave request should include the requested start date, end date, and leave type.",
+      "response": "A leave request should include the requested start date, end date, and leave type\u3010leave_policy.txt\u3011.",
       "review": {
         "grounded": true,
         "issues": []
@@ -24,7 +24,7 @@
       ],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 2051.2,
+      "duration_ms": 2139.9,
       "passed": true
     },
     {
@@ -33,7 +33,7 @@
       "question": "Can employees work remotely?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "Yes. According to the Remote Work Policy, employees may work remotely when permitted by their role, team requirements, and applicable company policy.",
+      "response": "Yes. According to the Remote Work Policy, employees may work remotely when permitted by their role, team requirements, and applicable company policy\u3010Policy Source 2\u3011.",
       "review": {
         "grounded": true,
         "issues": []
@@ -46,7 +46,7 @@
       ],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 1967.73,
+      "duration_ms": 1935.22,
       "passed": true
     },
     {
@@ -55,7 +55,7 @@
       "question": "What should an IT support ticket contain?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "A support ticket should contain a clear description of the problem and any relevant information needed by the helpdesk.",
+      "response": "An IT support ticket should include **a clear description of the problem and any relevant information needed by the helpdesk**\u3010Policy Source 1\u3011.",
       "review": {
         "grounded": true,
         "issues": []
@@ -67,7 +67,7 @@
       ],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 1680.56,
+      "duration_ms": 2245.89,
       "passed": true
     },
     {
@@ -76,7 +76,7 @@
       "question": "Does the leave policy say that every leave request is automatically approved?",
       "route": "policy_rag",
       "expected_route": null,
-      "response": "No. The leave policy states that leave requests \u201cmay require manager approval according to the organization's leave rules,\u201d so they are not automatically approved.",
+      "response": "No. The leave policy states that \u201cLeave requests may require manager approval according to the organization's leave rules\u201d (leave_policy.txt). It does not say that every request is automatically approved.",
       "review": {
         "grounded": true,
         "issues": []
@@ -88,7 +88,7 @@
       "forbidden_keywords_found": [
         "automatically approved"
       ],
-      "duration_ms": 1696.02,
+      "duration_ms": 1895.45,
       "passed": false
     },
     {
@@ -97,12 +97,12 @@
       "question": "What is my leave balance?",
       "route": "action",
       "expected_route": "action",
-      "response": "{'employee_id': 'EMP001', 'found': True, 'annual_leave': 12, 'sick_leave': 8}",
+      "response": "{\n  \"employee_id\": \"EMP001\",\n  \"found\": true,\n  \"annual_leave\": 12,\n  \"sick_leave\": 8\n}",
       "review": null,
       "matched_keywords": [],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 674.0,
+      "duration_ms": 3880.49,
       "passed": true
     },
     {
@@ -116,7 +116,7 @@
       "matched_keywords": [],
       "missing_keywords": [],
       "forbidden_keywords_found": [],
-      "duration_ms": 531.24,
+      "duration_ms": 615.67,
       "passed": true
     }
   ]

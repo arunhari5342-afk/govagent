@@ -48,15 +48,13 @@ def retrieve_policy_chunks(
             normalize_embeddings=True,
         )
 
-        embedding_json = json.dumps(
-            embedding.tolist()
-        )
+        embedding_json = json.dumps(embedding.tolist())
 
         with engine.connect() as connection:
 
-            rows = connection.execute(
-                text(
-                    """
+            rows = (
+                connection.execute(
+                    text("""
                     SELECT
                         pc.id,
                         pc.document_id,
@@ -71,13 +69,15 @@ def retrieve_policy_chunks(
                         :embedding AS vector
                     )
                     LIMIT :top_k
-                    """
-                ),
-                {
-                    "embedding": embedding_json,
-                    "top_k": top_k,
-                },
-            ).mappings().all()
+                    """),
+                    {
+                        "embedding": embedding_json,
+                        "top_k": top_k,
+                    },
+                )
+                .mappings()
+                .all()
+            )
 
     results = []
 
@@ -131,14 +131,12 @@ def build_policy_context(
             "unknown",
         )
 
-        context_parts.append(
-            f"""
+        context_parts.append(f"""
 [Policy Source {index}]
 Source: {source}
 Similarity distance: {result["distance"]:.4f}
 
 {result["content"]}
-""".strip()
-        )
+""".strip())
 
     return "\n\n".join(context_parts)

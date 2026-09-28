@@ -72,17 +72,9 @@ def calculate_cost(
 ) -> float:
     """Calculate estimated LLM cost."""
 
-    input_cost = (
-        prompt_tokens
-        / 1_000_000
-        * input_price_per_million
-    )
+    input_cost = prompt_tokens / 1_000_000 * input_price_per_million
 
-    output_cost = (
-        completion_tokens
-        / 1_000_000
-        * output_price_per_million
-    )
+    output_cost = completion_tokens / 1_000_000 * output_price_per_million
 
     return input_cost + output_cost
 
@@ -108,10 +100,7 @@ def log_llm_usage(
         output_price_per_million,
     )
 
-    total_tokens = (
-        prompt_tokens
-        + completion_tokens
-    )
+    total_tokens = prompt_tokens + completion_tokens
 
     print(
         "[LLM USAGE]"

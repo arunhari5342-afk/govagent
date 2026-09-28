@@ -23,9 +23,7 @@ def trace_span(
 
     start_time = time.perf_counter()
 
-    started_at = datetime.now(
-        timezone.utc
-    ).isoformat()
+    started_at = datetime.now(timezone.utc).isoformat()
 
     span = {
         "span_id": span_id,
@@ -34,9 +32,7 @@ def trace_span(
         "metadata": metadata or {},
     }
 
-    print(
-        "\n[TRACE START]"
-    )
+    print("\n[TRACE START]")
     print(
         json.dumps(
             span,
@@ -66,15 +62,9 @@ def trace_span(
             2,
         )
 
-        span["finished_at"] = (
-            datetime.now(
-                timezone.utc
-            ).isoformat()
-        )
+        span["finished_at"] = datetime.now(timezone.utc).isoformat()
 
-        print(
-            "\n[TRACE END]"
-        )
+        print("\n[TRACE END]")
 
         print(
             json.dumps(
@@ -98,17 +88,9 @@ def calculate_cost(
     model/provider pricing can change.
     """
 
-    input_cost = (
-        prompt_tokens
-        / 1_000_000
-        * input_price_per_million
-    )
+    input_cost = prompt_tokens / 1_000_000 * input_price_per_million
 
-    output_cost = (
-        completion_tokens
-        / 1_000_000
-        * output_price_per_million
-    )
+    output_cost = completion_tokens / 1_000_000 * output_price_per_million
 
     return round(
         input_cost + output_cost,

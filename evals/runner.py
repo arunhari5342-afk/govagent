@@ -1,6 +1,5 @@
 ﻿import json
 import time
-
 from pathlib import Path
 
 from src.graph.checkpointer import (
@@ -10,21 +9,11 @@ from src.graph.graph import (
     build_graph,
 )
 
-
 BASE_DIR = Path(__file__).resolve().parent
 
-DATASET_PATH = (
-    BASE_DIR
-    / "dataset"
-    / "govagent_eval.json"
-)
+DATASET_PATH = BASE_DIR / "dataset" / "govagent_eval.json"
 
-REPORT_PATH = (
-    BASE_DIR
-    / ".."
-    / "reports"
-    / "baseline_results.json"
-)
+REPORT_PATH = BASE_DIR / ".." / "reports" / "baseline_results.json"
 
 
 def load_dataset():
@@ -43,15 +32,10 @@ def check_keywords(
     expected_keywords: list[str],
 ) -> list[str]:
 
-    response_lower = (
-        response.lower()
-    )
+    response_lower = response.lower()
 
     return [
-        keyword
-        for keyword in expected_keywords
-        if keyword.lower()
-        in response_lower
+        keyword for keyword in expected_keywords if keyword.lower() in response_lower
     ]
 
 
@@ -60,15 +44,10 @@ def check_not_keywords(
     forbidden_keywords: list[str],
 ) -> list[str]:
 
-    response_lower = (
-        response.lower()
-    )
+    response_lower = response.lower()
 
     return [
-        keyword
-        for keyword in forbidden_keywords
-        if keyword.lower()
-        in response_lower
+        keyword for keyword in forbidden_keywords if keyword.lower() in response_lower
     ]
 
 
@@ -80,21 +59,13 @@ def evaluate_case(
 
     start_time = time.perf_counter()
 
-    session_id = (
-        f"eval-{case['id']}-{index}"
-    )
+    session_id = f"eval-{case['id']}-{index}"
 
-    config = {
-        "configurable": {
-            "thread_id": session_id
-        }
-    }
+    config = {"configurable": {"thread_id": session_id}}
 
     result = app.invoke(
         {
-            "user_input": case[
-                "question"
-            ],
+            "user_input": case["question"],
             "session_id": session_id,
             "context": case.get(
                 "context",
@@ -105,32 +76,17 @@ def evaluate_case(
     )
 
     duration_ms = round(
-        (
-            time.perf_counter()
-            - start_time
-        )
-        * 1000,
+        (time.perf_counter() - start_time) * 1000,
         2,
     )
 
-    response = (
-        result.get(
-            "response"
-        )
-        or ""
-    )
+    response = result.get("response") or ""
 
-    route = result.get(
-        "route"
-    )
+    route = result.get("route")
 
-    review = result.get(
-        "review"
-    )
+    review = result.get("review")
 
-    expected_route = case.get(
-        "expected_route"
-    )
+    expected_route = case.get("expected_route")
 
     expected_keywords = case.get(
         "expected_keywords",
@@ -142,34 +98,21 @@ def evaluate_case(
         [],
     )
 
-    matched_keywords = (
-        check_keywords(
-            response,
-            expected_keywords,
-        )
+    matched_keywords = check_keywords(
+        response,
+        expected_keywords,
     )
 
-    matched_forbidden = (
-        check_not_keywords(
-            response,
-            expected_not_keywords,
-        )
+    matched_forbidden = check_not_keywords(
+        response,
+        expected_not_keywords,
     )
 
-    keyword_pass = (
-        len(matched_keywords)
-        == len(expected_keywords)
-    )
+    keyword_pass = len(matched_keywords) == len(expected_keywords)
 
-    forbidden_pass = (
-        len(matched_forbidden)
-        == 0
-    )
+    forbidden_pass = len(matched_forbidden) == 0
 
-    route_pass = (
-        expected_route is None
-        or route == expected_route
-    )
+    route_pass = expected_route is None or route == expected_route
 
     grounded_pass = True
 
@@ -198,12 +141,7 @@ def evaluate_case(
                 == 0
             )
 
-    passed = (
-        keyword_pass
-        and forbidden_pass
-        and route_pass
-        and grounded_pass
-    )
+    passed = keyword_pass and forbidden_pass and route_pass and grounded_pass
 
     return {
         "id": case["id"],
@@ -215,14 +153,9 @@ def evaluate_case(
         "review": review,
         "matched_keywords": matched_keywords,
         "missing_keywords": [
-            keyword
-            for keyword in expected_keywords
-            if keyword
-            not in matched_keywords
+            keyword for keyword in expected_keywords if keyword not in matched_keywords
         ],
-        "forbidden_keywords_found": (
-            matched_forbidden
-        ),
+        "forbidden_keywords_found": (matched_forbidden),
         "duration_ms": duration_ms,
         "passed": passed,
     }
@@ -240,23 +173,16 @@ def run_evaluations():
 
         checkpointer.setup()
 
-        app = graph.compile(
-            checkpointer=checkpointer
-        )
+        app = graph.compile(checkpointer=checkpointer)
 
         for index, case in enumerate(
             dataset,
             start=1,
         ):
 
-            print(
-                "\n"
-                + "=" * 60
-            )
+            print("\n" + "=" * 60)
 
-            print(
-                f"Evaluating {case['id']}"
-            )
+            print(f"Evaluating {case['id']}")
 
             result = evaluate_case(
                 app,
@@ -264,19 +190,11 @@ def run_evaluations():
                 index,
             )
 
-            results.append(
-                result
-            )
+            results.append(result)
 
-            print(
-                f"PASS: {result['passed']}"
-            )
+            print(f"PASS: {result['passed']}")
 
-    passed = sum(
-        1
-        for result in results
-        if result["passed"]
-    )
+    passed = sum(1 for result in results if result["passed"])
 
     total = len(results)
 
@@ -285,12 +203,14 @@ def run_evaluations():
             "total_cases": total,
             "passed_cases": passed,
             "failed_cases": total - passed,
-            "pass_rate": round(
-                passed / total * 100,
-                2,
-            )
-            if total
-            else 0,
+            "pass_rate": (
+                round(
+                    passed / total * 100,
+                    2,
+                )
+                if total
+                else 0
+            ),
         },
         "results": results,
     }
@@ -312,26 +232,15 @@ def run_evaluations():
             indent=2,
         )
 
-    print(
-        "\n"
-        + "=" * 60
-    )
+    print("\n" + "=" * 60)
 
-    print(
-        "Evaluation complete."
-    )
+    print("Evaluation complete.")
 
-    print(
-        f"Passed: {passed}/{total}"
-    )
+    print(f"Passed: {passed}/{total}")
 
-    print(
-        f"Pass rate: {report['summary']['pass_rate']}%"
-    )
+    print(f"Pass rate: {report['summary']['pass_rate']}%")
 
-    print(
-        f"Report: {REPORT_PATH}"
-    )
+    print(f"Report: {REPORT_PATH}")
 
 
 if __name__ == "__main__":

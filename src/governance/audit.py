@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-
 load_dotenv()
 
 DATABASE_URL = os.environ["DATABASE_URL"]
@@ -18,9 +17,7 @@ engine = create_engine(
 
 def initialize_audit_table() -> None:
     with engine.begin() as connection:
-        connection.execute(
-            text(
-                """
+        connection.execute(text("""
                 CREATE TABLE IF NOT EXISTS audit_logs (
                     id BIGSERIAL PRIMARY KEY,
                     session_id TEXT,
@@ -33,9 +30,7 @@ def initialize_audit_table() -> None:
                     details JSONB,
                     created_at TIMESTAMPTZ NOT NULL
                 )
-                """
-            )
-        )
+                """))
 
 
 def write_audit_log(
@@ -51,8 +46,7 @@ def write_audit_log(
 
     with engine.begin() as connection:
         connection.execute(
-            text(
-                """
+            text("""
                 INSERT INTO audit_logs (
                     session_id,
                     action,
@@ -75,8 +69,7 @@ def write_audit_log(
                     CAST(:details AS JSONB),
                     :created_at
                 )
-                """
-            ),
+                """),
             {
                 "session_id": session_id,
                 "action": action,
@@ -85,11 +78,7 @@ def write_audit_log(
                 "approval_id": approval_id,
                 "status": status,
                 "reviewer": reviewer,
-                "details": json.dumps(
-                    details or {}
-                ),
-                "created_at": datetime.now(
-                    timezone.utc
-                ),
+                "details": json.dumps(details or {}),
+                "created_at": datetime.now(timezone.utc),
             },
         )

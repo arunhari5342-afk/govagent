@@ -19,25 +19,14 @@ if __name__ == "__main__":
 
         checkpointer.setup()
 
-        app = graph.compile(
-            checkpointer=checkpointer
-        )
+        app = graph.compile(checkpointer=checkpointer)
 
-        config = {
-            "configurable": {
-                "thread_id": "govagent-session-001"
-            }
-        }
+        config = {"configurable": {"thread_id": "govagent-session-001"}}
 
         result = app.invoke(
             {
-                "user_input": (
-                    "What is the employee "
-                    "leave policy?"
-                ),
-                "session_id": (
-                    "govagent-session-001"
-                ),
+                "user_input": ("What is the employee " "leave policy?"),
+                "session_id": ("govagent-session-001"),
                 "context": """
 Employees can submit leave requests
 through the approved HR process.

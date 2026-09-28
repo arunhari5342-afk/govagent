@@ -1,20 +1,13 @@
-import re
-from concurrent.futures import (
+﻿from concurrent.futures import (
     ThreadPoolExecutor,
     TimeoutError,
 )
 
-from src.graph.state import GovAgentState
-from src.mcp_server.tools import (
-    create_ticket,
-    get_leave_balance,
-)
-from src.observability.tracing import trace_span
-from src.services.approval_service import (
-    create_approval,
-)
 from src.governance.audit import write_audit_log
-
+from src.graph.state import GovAgentState
+from src.mcp_server.client import get_leave_balance
+from src.observability.tracing import trace_span
+from src.services.approval_service import create_approval
 
 TOOL_TIMEOUT_SECONDS = 5
 
@@ -25,20 +18,15 @@ def run_tool_with_timeout(
     timeout_seconds: int = TOOL_TIMEOUT_SECONDS,
     **kwargs,
 ):
-    """Run a tool with a bounded execution time."""
+    """Run an MCP tool with a bounded execution time."""
 
-    with ThreadPoolExecutor(
-        max_workers=1
-    ) as executor:
-
+    with ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(
             tool_function,
             **kwargs,
         )
 
-        return future.result(
-            timeout=timeout_seconds
-        )
+        return future.result(timeout=timeout_seconds)
 
 
 def action_agent(
@@ -68,17 +56,13 @@ def action_agent(
                 "tool.get_leave_balance",
                 {
                     "employee_id": "EMP001",
-                    "timeout_seconds": (
-                        TOOL_TIMEOUT_SECONDS
-                    ),
+                    "transport": "mcp-stdio",
+                    "timeout_seconds": TOOL_TIMEOUT_SECONDS,
                 },
             ):
-
                 result = run_tool_with_timeout(
                     get_leave_balance,
-                    timeout_seconds=(
-                        TOOL_TIMEOUT_SECONDS
-                    ),
+                    timeout_seconds=TOOL_TIMEOUT_SECONDS,
                     employee_id="EMP001",
                 )
 
@@ -91,24 +75,22 @@ def action_agent(
                 tool_name="get_leave_balance",
                 status="timeout",
                 details={
-                    "timeout_seconds": (
-                        TOOL_TIMEOUT_SECONDS
-                    ),
+                    "transport": "mcp-stdio",
+                    "timeout_seconds": TOOL_TIMEOUT_SECONDS,
                 },
             )
 
             return {
                 **state,
                 "response": (
-                    "The leave-balance service "
-                    "timed out. No action was completed."
+                    "The leave-balance service timed out. " "No action was completed."
                 ),
                 "tool_result": {
                     "status": "timeout",
                 },
             }
 
-        except Exception as exc:
+        except RuntimeError as exc:
 
             write_audit_log(
                 session_id=session_id,
@@ -117,16 +99,14 @@ def action_agent(
                 tool_name="get_leave_balance",
                 status="error",
                 details={
+                    "transport": "mcp-stdio",
                     "error": str(exc),
                 },
             )
 
             return {
                 **state,
-                "response": (
-                    "The leave-balance service "
-                    "could not be reached."
-                ),
+                "response": "The leave-balance service could not be reached.",
                 "tool_result": {
                     "status": "error",
                 },
@@ -140,6 +120,7 @@ def action_agent(
             status="success",
             details={
                 "employee_id": "EMP001",
+                "transport": "mcp-stdio",
             },
         )
 
@@ -161,10 +142,7 @@ def action_agent(
         "helpdesk ticket",
     ]
 
-    if any(
-        keyword in normalized
-        for keyword in ticket_keywords
-    ):
+    if any(keyword in normalized for keyword in ticket_keywords):
 
         approval_id = create_approval(
             session_id=session_id,
@@ -173,7 +151,6 @@ def action_agent(
                 "employee_id": "EMP001",
                 "title": "IT Helpdesk Request",
                 "description": user_input,
-                "priority": "normal",
             },
         )
 
@@ -184,8 +161,7 @@ def action_agent(
                 "status": "pending",
                 "action": "create_ticket",
                 "message": (
-                    "Human approval is required "
-                    "before creating this ticket."
+                    "Human approval is required " "before creating this ticket."
                 ),
             },
             "response": (
@@ -197,7 +173,5 @@ def action_agent(
 
     return {
         **state,
-        "response": (
-            "I could not determine the requested action."
-        ),
+        "response": "I could not determine the requested action.",
     }

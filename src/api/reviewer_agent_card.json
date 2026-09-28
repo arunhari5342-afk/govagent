@@ -1,0 +1,23 @@
+﻿{
+  "name": "GovAgent Reviewer",
+  "description": "Reviews GovAgent responses for groundedness and unsupported claims.",
+  "version": "1.1.0",
+  "capabilities": [
+    "groundedness_review",
+    "source_validation"
+  ],
+  "input": {
+    "type": "object",
+    "required": [
+      "draft",
+      "sources"
+    ]
+  },
+  "output": {
+    "type": "object",
+    "required": [
+      "grounded",
+      "issues"
+    ]
+  }
+}

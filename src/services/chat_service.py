@@ -19,15 +19,9 @@ def chat(
 
         checkpointer.setup()
 
-        app = graph.compile(
-            checkpointer=checkpointer
-        )
+        app = graph.compile(checkpointer=checkpointer)
 
-        config = {
-            "configurable": {
-                "thread_id": session_id
-            }
-        }
+        config = {"configurable": {"thread_id": session_id}}
 
         result = app.invoke(
             {

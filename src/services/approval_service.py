@@ -6,10 +6,8 @@ from sqlalchemy import text
 from src.governance.audit import (
     write_audit_log,
 )
+from src.mcp_server.client import create_ticket
 from src.mcp_server.database import engine
-from src.mcp_server.tools import (
-    create_ticket,
-)
 from src.observability.tracing import (
     trace_span,
 )
@@ -19,9 +17,7 @@ def initialize_approval_table() -> None:
     """Create approval table if it does not exist."""
 
     with engine.begin() as connection:
-        connection.execute(
-            text(
-                """
+        connection.execute(text("""
                 CREATE TABLE IF NOT EXISTS approvals (
                     id BIGSERIAL PRIMARY KEY,
                     session_id TEXT NOT NULL,
@@ -33,9 +29,7 @@ def initialize_approval_table() -> None:
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     decided_at TIMESTAMPTZ
                 )
-                """
-            )
-        )
+                """))
 
 
 def create_approval(
@@ -51,8 +45,7 @@ def create_approval(
     with engine.begin() as connection:
 
         result = connection.execute(
-            text(
-                """
+            text("""
                 INSERT INTO approvals (
                     session_id,
                     action_type,
@@ -66,8 +59,7 @@ def create_approval(
                     'pending'
                 )
                 RETURNING id
-                """
-            ),
+                """),
             {
                 "session_id": session_id,
                 "action_type": action_type,
@@ -85,9 +77,7 @@ def create_approval(
         approval_id=approval_id,
         status="pending",
         details={
-            "reason": (
-                "write_action_requires_human_approval"
-            ),
+            "reason": ("write_action_requires_human_approval"),
             "payload": payload,
         },
     )
@@ -104,9 +94,9 @@ def get_approval(
 
     with engine.connect() as connection:
 
-        row = connection.execute(
-            text(
-                """
+        row = (
+            connection.execute(
+                text("""
                 SELECT
                     id,
                     session_id,
@@ -119,12 +109,14 @@ def get_approval(
                     decided_at
                 FROM approvals
                 WHERE id = :approval_id
-                """
-            ),
-            {
-                "approval_id": approval_id,
-            },
-        ).mappings().first()
+                """),
+                {
+                    "approval_id": approval_id,
+                },
+            )
+            .mappings()
+            .first()
+        )
 
     if row is None:
         return None
@@ -147,14 +139,10 @@ def process_approval(
 
     initialize_approval_table()
 
-    approval = get_approval(
-        approval_id
-    )
+    approval = get_approval(approval_id)
 
     if approval is None:
-        raise ValueError(
-            f"Approval {approval_id} was not found."
-        )
+        raise ValueError(f"Approval {approval_id} was not found.")
 
     if approval["status"] != "pending":
         raise ValueError(
@@ -176,8 +164,7 @@ def process_approval(
         with engine.begin() as connection:
 
             connection.execute(
-                text(
-                    """
+                text("""
                     UPDATE approvals
                     SET
                         status = 'rejected',
@@ -185,15 +172,12 @@ def process_approval(
                         comment = :comment,
                         decided_at = :decided_at
                     WHERE id = :approval_id
-                    """
-                ),
+                    """),
                 {
                     "approval_id": approval_id,
                     "reviewer": reviewer,
                     "comment": comment,
-                    "decided_at": (
-                        datetime.now(timezone.utc)
-                    ),
+                    "decided_at": (datetime.now(timezone.utc)),
                 },
             )
 
@@ -224,10 +208,7 @@ def process_approval(
     # ---------------------------------------------
 
     if action_type != "create_ticket":
-        raise ValueError(
-            f"Unsupported approval action: "
-            f"{action_type}"
-        )
+        raise ValueError(f"Unsupported approval action: " f"{action_type}")
 
     try:
 
@@ -271,8 +252,7 @@ def process_approval(
     with engine.begin() as connection:
 
         connection.execute(
-            text(
-                """
+            text("""
                 UPDATE approvals
                 SET
                     status = 'approved',
@@ -280,15 +260,12 @@ def process_approval(
                     comment = :comment,
                     decided_at = :decided_at
                 WHERE id = :approval_id
-                """
-            ),
+                """),
             {
                 "approval_id": approval_id,
                 "reviewer": reviewer,
                 "comment": comment,
-                "decided_at": (
-                    datetime.now(timezone.utc)
-                ),
+                "decided_at": (datetime.now(timezone.utc)),
             },
         )
 

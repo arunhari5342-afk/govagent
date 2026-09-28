@@ -1,6 +1,5 @@
 from src.mcp_server.database import initialize_mock_data
-from src.mcp_server.tools import create_ticket
-from src.mcp_server.tools import get_leave_balance
+from src.mcp_server.tools import create_ticket, get_leave_balance
 
 
 def setup_module():

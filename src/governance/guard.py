@@ -1,36 +1,68 @@
 import re
 
 from src.governance.audit import write_audit_log
-from src.graph.state import GovAgentState
 
-
-BLOCKED_PATTERNS = [
-    r"ignore\s+(all\s+)?previous\s+instructions",
-    r"ignore\s+(the\s+)?system\s+prompt",
-    r"reveal\s+(the\s+)?system\s+prompt",
-    r"show\s+(me\s+)?your\s+hidden\s+instructions",
-    r"disregard\s+(all\s+)?previous\s+instructions",
+PROMPT_INJECTION_PATTERNS = [
+    # Override previous instructions/rules
+    r"\bdisregard\b.*\b(previous|prior|all)\b.*\b(rules|instructions)\b",
+    r"\bignore\b.*\b(previous|prior|all)\b.*\b(instructions|rules)\b",
+    # Approval bypass
+    r"\b(bypass|skip|avoid)\b.*\bapproval\b",
+    r"\bwithout\b.*\bapproval\b",
+    # System prompt / hidden instructions
+    r"\breveal\b.*\b(hidden|system)\b.*\b(instructions|prompt)\b",
+    r"\bshow\b.*\b(system|hidden)\b.*\b(prompt|instructions)\b",
+    r"\b(system prompt|hidden instructions)\b",
+    # Security controls
+    r"\bdisable\b.*\bsecurity\b.*\bcontrols?\b",
+    r"\bdisable\b.*\bsecurity\b",
+    # Governance bypass
+    r"\bpretend\b.*\b(governance|security)\b.*\b(rules?|controls?)\b",
+    r"\b(governance|security)\b.*\b(rules?|controls?)\b.*\b(do not|don't)\b.*\bexist\b",
+    # Execute action without approval
+    r"\bexecute\b.*\b(ticket|action)\b.*\bwithout\b.*\bapproval\b",
+    # Replace policy instructions
+    r"\bfollow\b.*\binstructions\b.*\binstead\b.*\bpolicy\b",
+    r"\bignore\b.*\bpolicy\b",
 ]
 
 
 def contains_prompt_injection(text: str) -> bool:
-    normalized = text.lower()
+    """
+    Return True when the supplied text contains a known
+    prompt-injection pattern targeting system instructions,
+    policy rules, security controls, governance, or approval.
+    """
+    if not text:
+        return False
 
-    return any(
-        re.search(pattern, normalized)
-        for pattern in BLOCKED_PATTERNS
-    )
+    normalized = " ".join(text.lower().split())
+
+    for pattern in PROMPT_INJECTION_PATTERNS:
+        if re.search(pattern, normalized, flags=re.IGNORECASE):
+            return True
+
+    return False
 
 
-def governance_guard(state: GovAgentState) -> GovAgentState:
+# Backward-compatible alias.
+# This allows application code to use either name while the
+# existing tests continue to use contains_prompt_injection().
+def is_prompt_injection(text: str) -> bool:
+    return contains_prompt_injection(text)
+
+
+def governance_guard(state: dict) -> dict:
+    """
+    Governance guard.
+
+    Blocks unsafe requests before they are allowed to continue
+    through the agent workflow.
+    """
     user_input = state.get("user_input", "")
-    context = state.get("context", "")
+    session_id = state.get("session_id", "default-session")
 
-    combined = f"{user_input}\n{context}"
-
-    if contains_prompt_injection(combined):
-        session_id = state.get("session_id")
-
+    if contains_prompt_injection(user_input):
         write_audit_log(
             session_id=session_id,
             action="governance_guard",
@@ -43,11 +75,11 @@ def governance_guard(state: GovAgentState) -> GovAgentState:
 
         return {
             **state,
-            "response": (
-                "The request was blocked because the supplied "
-                "content contains an unsafe instruction pattern."
-            ),
             "governance_status": "blocked",
+            "response": (
+                "The request was blocked because it contains "
+                "an unsafe instruction pattern."
+            ),
         }
 
     return {

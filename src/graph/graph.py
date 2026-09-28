@@ -27,9 +27,7 @@ from src.graph.state import (
 def route_after_guard(
     state: GovAgentState,
 ):
-    status = state.get(
-        "governance_status"
-    )
+    status = state.get("governance_status")
 
     if status in {
         "blocked",
@@ -45,9 +43,7 @@ def route_after_guard(
 
 def build_graph():
 
-    builder = StateGraph(
-        GovAgentState
-    )
+    builder = StateGraph(GovAgentState)
 
     builder.add_node(
         "router",

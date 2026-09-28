@@ -2,6 +2,7 @@ services:
   postgres:
     image: pgvector/pgvector:pg17
     container_name: govagent_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: govagent
       POSTGRES_USER: govagent_user
@@ -10,14 +11,91 @@ services:
       - "5435:5432"
     volumes:
       - govagent_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U govagent_user -d govagent"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7
     container_name: govagent_redis
+    restart: unless-stopped
     ports:
       - "6381:6379"
     volumes:
       - govagent_redis_data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: govagent_mcp_server
+    restart: unless-stopped
+    command:
+      [
+        "python",
+        "-m",
+        "src.mcp_server.server"
+      ]
+    environment:
+      DATABASE_URL: postgresql+psycopg://govagent_user:govagent_password@postgres:5432/govagent
+      POSTGRES_CHECKPOINT_URL: postgresql://govagent_user:govagent_password@postgres:5432/govagent
+      REDIS_URL: redis://redis:6379/0
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: govagent_api
+    restart: unless-stopped
+    command:
+      [
+        "uvicorn",
+        "src.api.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8001"
+      ]
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql+psycopg://govagent_user:govagent_password@postgres:5432/govagent
+      POSTGRES_CHECKPOINT_URL: postgresql://govagent_user:govagent_password@postgres:5432/govagent
+      REDIS_URL: redis://redis:6379/0
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      PYTHONPATH: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mcp-server:
+        condition: service_started
 
 volumes:
   govagent_postgres_data:
