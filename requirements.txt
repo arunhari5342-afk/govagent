@@ -8,4 +8,9 @@ sentence-transformers
 redis
 mcp
 pydantic
+pydantic-settings
+langchain
+langchain-openai
+langgraph
+langgraph-checkpoint-postgres
 pytest
